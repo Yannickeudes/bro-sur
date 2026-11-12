@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import ReportButton from '../components/ReportButton.jsx'
+import ReplyThread from '../components/ReplyThread.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { categoryName } from '../lib/categories.js'
@@ -19,7 +20,12 @@ export default function DiscussionDetail() {
   const [busy, setBusy] = useState(false)
 
   const loadReplies = useCallback(async () => {
-    const { data } = await supabase.from('replies_public').select('*').eq('discussion_id', id).order('created_at')
+    const { data } = await supabase
+      .from('replies_public')
+      .select('*')
+      .eq('discussion_id', id)
+      .is('parent_reply_id', null)
+      .order('created_at')
     setReplies(data ?? [])
   }, [id])
 
@@ -93,9 +99,14 @@ export default function DiscussionDetail() {
           <li key={r.id} className="rounded-2xl border border-line bg-card p-5">
             <p className="whitespace-pre-line leading-relaxed">{r.body}</p>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm text-muted">
-              <span>{r.author_pseudonym ?? 'Anonyme'} · {fmtDate(r.created_at)}</span>
+              <span>
+                {r.author_pseudonym ?? 'Anonyme'}
+                {r.is_discussion_author && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-dark">Auteur</span>}
+                {' · '}{fmtDate(r.created_at)}
+              </span>
               <ReportButton replyId={r.id} />
             </div>
+            <ReplyThread discussionId={id} parentReplyId={r.id} />
           </li>
         ))}
       </ul>

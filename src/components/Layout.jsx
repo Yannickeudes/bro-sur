@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { Home, MessagesSquare, PenLine, User } from 'lucide-react'
 import { useAuth } from '../lib/AuthContext.jsx'
+import NotificationBell from './NotificationBell.jsx'
 
 const top = ({ isActive }) => `text-sm font-medium ${isActive ? 'text-brand' : 'text-muted hover:text-ink'}`
 const tabs = [
@@ -23,7 +24,10 @@ export default function Layout() {
           </nav>
           <div className="flex items-center gap-1">
             {user ? (
-              <Link to="/mon-espace" className="btn btn-line">{profile?.pseudonym ?? 'Mon espace'}</Link>
+              <>
+                <NotificationBell />
+                <Link to="/mon-espace" className="btn btn-line">{profile?.pseudonym ?? 'Mon espace'}</Link>
+              </>
             ) : (
               <>
                 <Link to="/connexion" className="btn btn-ghost">Se connecter</Link>
