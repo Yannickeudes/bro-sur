@@ -94,6 +94,11 @@ export default function DiscussionDetail() {
       </article>
 
       <h2 className="mt-12 text-2xl">{d.reply_count} réponses</h2>
+      {Number(d.thread_reply_count) > 0 && (
+        <p className="mt-1 text-sm text-muted">
+          + {d.thread_reply_count} {Number(d.thread_reply_count) > 1 ? 'réponses échangées' : 'réponse échangée'} dans les fils
+        </p>
+      )}
       <ul className="mt-4 space-y-4">
         {replies.map((r) => (
           <li key={r.id} className="rounded-2xl border border-line bg-card p-5">

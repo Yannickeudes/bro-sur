@@ -70,7 +70,10 @@ export default function Discussions() {
             <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
               <span>{d.author_pseudonym ?? 'Anonyme'} · {fmtDate(d.created_at)}</span>
               <span className="inline-flex items-center gap-1"><Heart size={14} aria-hidden="true" />{d.support_count} soutiens</span>
-              <span className="inline-flex items-center gap-1"><MessageCircle size={14} aria-hidden="true" />{d.reply_count} réponses</span>
+              <span className="inline-flex items-center gap-1">
+                <MessageCircle size={14} aria-hidden="true" />{d.reply_count} réponses
+                {Number(d.thread_reply_count) > 0 && ` (+${d.thread_reply_count} dans les fils)`}
+              </span>
             </p>
           </Link>
         ))}
