@@ -16,7 +16,6 @@ export default function Home() {
   return (
     <>
       <section className="wrap py-16 md:py-24">
-        <p className="mb-4 text-sm font-medium text-brand">Bienvenue chez Bro sûr</p>
         <h1 className="max-w-3xl text-4xl leading-tight md:text-6xl">Un espace pour parler, écouter et avancer ensemble.</h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
           Tu as une question que tu n’oses pas poser ? Une situation qui te pèse ? Ici, tu partages ce que tu veux, sous pseudonyme, et des jeunes comme toi te répondent avec bienveillance.
