@@ -57,6 +57,7 @@ export default function Layout() {
           <div className="text-sm">
             <p className="mb-2 font-semibold">Bon à savoir</p>
             <p className="text-muted">Les conseils partagés ici viennent de membres, pas de professionnels. En cas de détresse, contacte une personne de confiance ou un service d’aide.</p>
+            <p className="mt-2"><Link className="text-brand underline" to="/confidentialite">Politique de confidentialité</Link></p>
           </div>
         </div>
         <p className="wrap pb-6 text-xs text-muted">© 2026 Bro sûr. Écouter avant de répondre.</p>

@@ -10,6 +10,7 @@ import Discussions from './pages/Discussions.jsx'
 import DiscussionDetail from './pages/DiscussionDetail.jsx'
 import NewDiscussion from './pages/NewDiscussion.jsx'
 import ComingSoon from './pages/ComingSoon.jsx'
+import Confidentialite from './pages/Confidentialite.jsx'
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="regles" element={<Rules />} />
         <Route path="aide" element={<Aide />} />
+        <Route path="confidentialite" element={<Confidentialite />} />
         <Route path="connexion" element={<AuthPage mode="login" />} />
         <Route path="inscription" element={<AuthPage mode="register" />} />
         <Route path="mon-espace" element={<Profile />} />
