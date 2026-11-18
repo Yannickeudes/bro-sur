@@ -15,6 +15,7 @@ Site en ligne : https://yannickeudes.github.io/bro-sur/
 - Signalement des contenus et page de modération réservée aux modérateurs
 - Limites anti-abus : 5 discussions et 30 réponses par heure et par membre
 - Règles de la communauté et page « Besoin d’aide ? »
+- Application installable (PWA) : icône d’accueil, écran de démarrage, cache hors-ligne de la coquille
 
 ## Technologies
 
@@ -23,6 +24,7 @@ Site en ligne : https://yannickeudes.github.io/bro-sur/
 | Interface | React 18, Vite, React Router, Tailwind CSS |
 | Backend | Supabase : PostgreSQL, authentification, règles d’accès par ligne (RLS) |
 | Hébergement | GitHub Pages, publié par GitHub Actions (compatible Vercel) |
+| PWA | Manifest + service worker maison (`public/sw.js`), sans dépendance |
 
 Le site est statique : le navigateur parle directement à Supabase avec la clé publique. La sécurité repose sur les règles d’accès de la base de données.
 
@@ -56,7 +58,7 @@ Puis lancer `npm run dev` et ouvrir http://localhost:5173. Le fichier `.env` n�
 
 ## Base de données
 
-Dans Supabase, ouvrir SQL Editor et exécuter les scripts du dossier `supabase/` dans cet ordre : `schema.sql`, `etape-4.sql`, puis les migrations numérotées.
+Dans Supabase, ouvrir SQL Editor et exécuter les scripts du dossier `supabase/` dans cet ordre : `schema.sql`, `etape-4.sql`, `etape-5.sql` (fils de réponses, notifications, vues corrigées — obligatoire pour que tout fonctionne).
 
 Pour nommer un modérateur, après avoir créé le compte (remplacer `VotrePseudo`) :
 
