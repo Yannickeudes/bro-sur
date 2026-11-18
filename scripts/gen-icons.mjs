@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const CREAM = [250, 246, 241]
-const TEAL = [138, 59, 77]
-const TEAL_DARK = [106, 44, 60]
+const TEAL = [178, 89, 56]
+const TEAL_DARK = [150, 69, 44]
 
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 mkdirSync(outDir, { recursive: true })
