@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Heart } from 'lucide-react'
+import { Heart, Pencil } from 'lucide-react'
 import ReportButton from '../components/ReportButton.jsx'
 import ReplyThread from '../components/ReplyThread.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { categoryName } from '../lib/categories.js'
 import { fmtDate } from '../lib/format.js'
+
+const field = 'mt-1 w-full rounded-xl border border-line bg-card px-4 py-2.5'
 
 export default function DiscussionDetail() {
   const { id } = useParams()
@@ -18,6 +20,18 @@ export default function DiscussionDetail() {
   const [anon, setAnon] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // Édition de la discussion
+  const [editing, setEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [editBusy, setEditBusy] = useState(false)
+  const [editError, setEditError] = useState('')
+
+  // Édition d'une réponse
+  const [editingReply, setEditingReply] = useState(null)
+  const [replyBody, setReplyBody] = useState('')
+  const [replyBusy, setReplyBusy] = useState(false)
 
   const loadReplies = useCallback(async () => {
     const { data } = await supabase
@@ -63,6 +77,36 @@ export default function DiscussionDetail() {
     loadReplies()
   }
 
+  function startEdit() {
+    setEditTitle(d.title); setEditBody(d.body); setEditError(''); setEditing(true)
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault()
+    setEditBusy(true); setEditError('')
+    const { error: err } = await supabase.rpc('edit_own_discussion', {
+      p_id: id, p_title: editTitle, p_body: editBody,
+    })
+    setEditBusy(false)
+    if (err) return setEditError(err.message)
+    setD((x) => ({ ...x, title: editTitle.trim(), body: editBody.trim() }))
+    setEditing(false)
+  }
+
+  function startReplyEdit(r) {
+    setEditingReply(r.id); setReplyBody(r.body); setError('')
+  }
+
+  async function saveReplyEdit(e, replyId) {
+    e.preventDefault()
+    setReplyBusy(true); setError('')
+    const { error: err } = await supabase.rpc('edit_own_reply', { p_id: replyId, p_body: replyBody })
+    setReplyBusy(false)
+    if (err) return setError(err.message)
+    setReplies((list) => list.map((r) => (r.id === replyId ? { ...r, body: replyBody.trim() } : r)))
+    setEditingReply(null)
+  }
+
   if (!supabase) return <p className="wrap py-20 text-muted">Supabase n’est pas configuré (voir le fichier .env).</p>
   if (d === undefined) return <p className="wrap py-20 text-muted">Chargement…</p>
   if (d === null) return (
@@ -77,9 +121,23 @@ export default function DiscussionDetail() {
       <Link to="/discussions" className="text-sm text-brand underline">Toutes les discussions</Link>
       <article className="mt-4">
         <span className="rounded-full bg-brand-soft px-3 py-1 text-xs text-brand-dark">{categoryName(d.category)}</span>
-        <h1 className="mt-3 text-3xl md:text-4xl">{d.title}</h1>
-        <p className="mt-2 text-sm text-muted">{d.author_pseudonym ?? 'Anonyme'} · {fmtDate(d.created_at)}</p>
-        <p className="mt-6 whitespace-pre-line text-lg leading-relaxed">{d.body}</p>
+        {editing ? (
+          <form onSubmit={saveEdit} className="mt-3 space-y-3">
+            <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required minLength={5} maxLength={120} className={`${field} text-xl font-semibold`} aria-label="Titre" />
+            <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} required minLength={10} maxLength={5000} rows={8} className={field} aria-label="Texte" />
+            {editError && <p role="alert" className="text-sm text-red-700">{editError}</p>}
+            <div className="flex gap-3">
+              <button className="btn btn-primary" disabled={editBusy}>{editBusy ? 'Enregistrement…' : 'Enregistrer'}</button>
+              <button type="button" onClick={() => setEditing(false)} className="text-sm text-muted underline">Annuler</button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <h1 className="mt-3 text-3xl md:text-4xl">{d.title}</h1>
+            <p className="mt-2 text-sm text-muted">{d.author_pseudonym ?? 'Anonyme'} · {fmtDate(d.created_at)}</p>
+            <p className="mt-6 whitespace-pre-line text-lg leading-relaxed">{d.body}</p>
+          </>
+        )}
         <div className="mt-6 flex items-center gap-3">
           {user ? (
             <button onClick={toggleSupport} aria-pressed={supported} className={`btn ${supported ? 'btn-primary' : 'btn-line'}`}>
@@ -89,6 +147,11 @@ export default function DiscussionDetail() {
             <Link to="/connexion" className="text-sm text-brand underline">Connecte-toi pour soutenir</Link>
           )}
           <span className="text-sm text-muted">{d.support_count} soutiens</span>
+          {!editing && d.is_mine && (
+            <button onClick={startEdit} className="inline-flex items-center gap-1 text-sm text-muted hover:text-ink">
+              <Pencil size={14} aria-hidden="true" />Modifier
+            </button>
+          )}
           <ReportButton discussionId={d.id} />
         </div>
       </article>
@@ -102,15 +165,33 @@ export default function DiscussionDetail() {
       <ul className="mt-4 space-y-4">
         {replies.map((r) => (
           <li key={r.id} className="rounded-2xl border border-line bg-card p-5">
-            <p className="whitespace-pre-line leading-relaxed">{r.body}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm text-muted">
-              <span>
-                {r.author_pseudonym ?? 'Anonyme'}
-                {r.is_discussion_author && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-dark">Auteur</span>}
-                {' · '}{fmtDate(r.created_at)}
-              </span>
-              <ReportButton replyId={r.id} />
-            </div>
+            {editingReply === r.id ? (
+              <form onSubmit={(e) => saveReplyEdit(e, r.id)} className="space-y-3">
+                <textarea value={replyBody} onChange={(e) => setReplyBody(e.target.value)} required maxLength={2000} rows={4} className={field} aria-label="Ta réponse" />
+                {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+                <div className="flex gap-3">
+                  <button className="btn btn-primary" disabled={replyBusy}>{replyBusy ? 'Un instant…' : 'Enregistrer'}</button>
+                  <button type="button" onClick={() => setEditingReply(null)} className="text-sm text-muted underline">Annuler</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p className="whitespace-pre-line leading-relaxed">{r.body}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 text-sm text-muted">
+                  <span>
+                    {r.author_pseudonym ?? 'Anonyme'}
+                    {r.is_discussion_author && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-dark">Auteur</span>}
+                    {' · '}{fmtDate(r.created_at)}
+                  </span>
+                  {r.is_mine && (
+                    <button onClick={() => startReplyEdit(r)} className="inline-flex items-center gap-1 hover:text-ink">
+                      <Pencil size={13} aria-hidden="true" />Modifier
+                    </button>
+                  )}
+                  <ReportButton replyId={r.id} />
+                </div>
+              </>
+            )}
             <ReplyThread discussionId={id} parentReplyId={r.id} />
           </li>
         ))}
@@ -122,7 +203,7 @@ export default function DiscussionDetail() {
             <textarea value={body} onChange={(e) => setBody(e.target.value)} required maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-line bg-card px-4 py-2.5" placeholder="Partage ton expérience, avec bienveillance." />
           </label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={anon} onChange={(e) => setAnon(e.target.checked)} />Répondre anonymement</label>
-          {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+          {error && !editingReply && <p role="alert" className="text-sm text-red-700">{error}</p>}
           <button className="btn btn-primary" disabled={busy || !body.trim()}>{busy ? 'Un instant…' : 'Répondre'}</button>
         </form>
       ) : (

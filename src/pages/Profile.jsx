@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { Download, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { categoryName } from '../lib/categories.js'
@@ -10,6 +11,7 @@ export default function Profile() {
   const [pseudo, setPseudo] = useState('')
   const [msg, setMsg] = useState('')
   const [mine, setMine] = useState(null)
+  const [accountBusy, setAccountBusy] = useState(false)
 
   const loadMine = () => supabase.from('discussions')
     .select('id, title, category, created_at, status, is_anonymous')
@@ -30,6 +32,31 @@ export default function Profile() {
     if (!window.confirm('Supprimer définitivement cette discussion et ses réponses ?')) return
     await supabase.from('discussions').delete().eq('id', id)
     loadMine()
+  }
+
+  async function exportData() {
+    setAccountBusy(true)
+    const { data, error } = await supabase.rpc('export_my_data')
+    setAccountBusy(false)
+    if (error) return setMsg('Export impossible pour le moment.')
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `bro-sur-mes-donnees-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function deleteAccount() {
+    if (!window.confirm('Supprimer définitivement ton compte et tout ce que tu as publié ? Cette action est irréversible.')) return
+    if (!window.confirm('Dernière confirmation : tu perdras accès à toutes tes discussions et réponses. Continuer ?')) return
+    setAccountBusy(true)
+    const { error } = await supabase.rpc('delete_own_account')
+    setAccountBusy(false)
+    if (error) return setMsg('Suppression impossible pour le moment. Réessaie ou contacte l’équipe.')
+    await signOut()
+    window.location.href = '/'
   }
 
   if (loading) return <p className="wrap py-20 text-muted">Chargement…</p>
@@ -60,6 +87,18 @@ export default function Profile() {
           </li>
         ))}
       </ul>
+
+      <h2 className="mt-12 text-2xl">Tes données</h2>
+      <p className="mt-2 text-sm text-muted">Conformément à la politique de confidentialité, tu peux récupérer une copie de tes données ou supprimer ton compte.</p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button onClick={exportData} disabled={accountBusy} className="btn btn-line">
+          <Download size={16} className="mr-2" aria-hidden="true" />Télécharger mes données
+        </button>
+        <button onClick={deleteAccount} disabled={accountBusy} className="btn btn-line !text-red-700">
+          <Trash2 size={16} className="mr-2" aria-hidden="true" />Supprimer mon compte
+        </button>
+      </div>
+
       <button onClick={signOut} className="btn btn-line mt-10">Se déconnecter</button>
     </section>
   )

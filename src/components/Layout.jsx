@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { Home, MessagesSquare, PenLine, User } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Download, Home, MessagesSquare, PenLine, Share, User, X } from 'lucide-react'
 import { useAuth } from '../lib/AuthContext.jsx'
 import NotificationBell from './NotificationBell.jsx'
 
@@ -11,8 +12,34 @@ const tabs = [
   { to: '/mon-espace', label: 'Profil', Icon: User },
 ]
 
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches
+
 export default function Layout() {
   const { user, profile } = useAuth()
+  const [installEvt, setInstallEvt] = useState(window.__broSurInstallPrompt ?? null)
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem('bro-sur-install') === 'dismissed')
+
+  useEffect(() => {
+    const onPrompt = () => setInstallEvt(window.__broSurInstallPrompt ?? null)
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt)
+  }, [])
+
+  const canInstall = !dismissed && !isStandalone() && (installEvt || isIOS)
+
+  async function install() {
+    if (!installEvt) return
+    await installEvt.prompt()
+    const { outcome } = await installEvt.userChoice
+    if (outcome === 'accepted') setInstallEvt(null)
+  }
+
+  function dismiss() {
+    localStorage.setItem('bro-sur-install', 'dismissed')
+    setDismissed(true)
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-20 border-b border-line bg-cream/95 backdrop-blur" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
@@ -62,6 +89,36 @@ export default function Layout() {
         </div>
         <p className="wrap pb-6 text-xs text-muted">© 2026 Bro sûr. Écouter avant de répondre.</p>
       </footer>
+
+      {canInstall && (
+        <div className="fixed inset-x-4 bottom-20 z-30 mx-auto max-w-md rounded-2xl border border-line bg-card p-4 shadow-lg md:bottom-6">
+          <div className="flex items-start gap-3">
+            <Download size={22} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold">Installer Bro sûr</p>
+              <p className="mt-1 text-xs text-muted">
+                {installEvt
+                  ? 'Ajoute l’app à ton écran d’accueil : elle s’ouvre comme une vraie application.'
+                  : 'Sur iPhone : touche Partager puis « Sur l’écran d’accueil ». Sur Android : menu ⋮ puis « Installer l’app ».'}
+              </p>
+              <div className="mt-3 flex gap-2">
+                {installEvt && (
+                  <button onClick={install} className="btn btn-primary !px-4 !py-1.5 !text-xs">
+                    <Download size={14} className="mr-1" aria-hidden="true" />Installer
+                  </button>
+                )}
+                {!installEvt && isIOS && (
+                  <span className="inline-flex items-center gap-1 text-xs text-brand"><Share size={14} aria-hidden="true" />Partager → Sur l’écran d’accueil</span>
+                )}
+                <button onClick={dismiss} className="btn btn-ghost !px-3 !py-1.5 !text-xs">Plus tard</button>
+              </div>
+            </div>
+            <button onClick={dismiss} aria-label="Fermer" className="rounded-full p-1 text-muted hover:bg-sand">
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-card md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {tabs.map(({ to, label, Icon, end }) => (

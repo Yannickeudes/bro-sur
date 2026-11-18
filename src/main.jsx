@@ -5,6 +5,13 @@ import App from './App.jsx'
 import { AuthProvider } from './lib/AuthContext.jsx'
 import './index.css'
 
+// Le navigateur propose l'installation PWA : on mémorise l'événement
+// pour afficher notre propre bannière.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  window.__broSurInstallPrompt = e
+})
+
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {})

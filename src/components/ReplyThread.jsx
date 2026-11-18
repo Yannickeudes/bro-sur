@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Pencil } from 'lucide-react'
 import ReportButton from './ReportButton.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/AuthContext.jsx'
 import { fmtDate } from '../lib/format.js'
+
+const field = 'mt-1 w-full rounded-xl border border-line bg-card px-4 py-2.5'
 
 // Fil de réponses sous un conseil (un seul niveau)
 export default function ReplyThread({ discussionId, parentReplyId }) {
@@ -13,6 +16,11 @@ export default function ReplyThread({ discussionId, parentReplyId }) {
   const [anon, setAnon] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  // Édition d'une réponse du fil
+  const [editing, setEditing] = useState(null)
+  const [editBody, setEditBody] = useState('')
+  const [editBusy, setEditBusy] = useState(false)
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -42,21 +50,49 @@ export default function ReplyThread({ discussionId, parentReplyId }) {
     load()
   }
 
+  async function saveEdit(e, replyId) {
+    e.preventDefault()
+    setEditBusy(true); setError('')
+    const { error: err } = await supabase.rpc('edit_own_reply', { p_id: replyId, p_body: editBody })
+    setEditBusy(false)
+    if (err) return setError(err.message)
+    setItems((list) => list.map((r) => (r.id === replyId ? { ...r, body: editBody.trim() } : r)))
+    setEditing(null)
+  }
+
   return (
     <div className="mt-3 border-l-2 border-line pl-4">
       {items.length > 0 && (
         <ul className="space-y-3">
           {items.map((r) => (
             <li key={r.id}>
-              <p className="whitespace-pre-line leading-relaxed">{r.body}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-4 text-sm text-muted">
-                <span>
-                  {r.author_pseudonym ?? 'Anonyme'}
-                  {r.is_discussion_author && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-dark">Auteur</span>}
-                  {' · '}{fmtDate(r.created_at)}
-                </span>
-                <ReportButton replyId={r.id} />
-              </div>
+              {editing === r.id ? (
+                <form onSubmit={(e) => saveEdit(e, r.id)} className="space-y-3">
+                  <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} required maxLength={2000} rows={3} className={field} aria-label="Ta réponse" />
+                  {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+                  <div className="flex gap-3">
+                    <button className="btn btn-primary" disabled={editBusy}>{editBusy ? 'Un instant…' : 'Enregistrer'}</button>
+                    <button type="button" onClick={() => setEditing(null)} className="text-sm text-muted underline">Annuler</button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <p className="whitespace-pre-line leading-relaxed">{r.body}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-4 text-sm text-muted">
+                    <span>
+                      {r.author_pseudonym ?? 'Anonyme'}
+                      {r.is_discussion_author && <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-dark">Auteur</span>}
+                      {' · '}{fmtDate(r.created_at)}
+                    </span>
+                    {r.is_mine && (
+                      <button onClick={() => { setEditing(r.id); setEditBody(r.body); setError('') }} className="inline-flex items-center gap-1 hover:text-ink">
+                        <Pencil size={13} aria-hidden="true" />Modifier
+                      </button>
+                    )}
+                    <ReportButton replyId={r.id} />
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ul>
