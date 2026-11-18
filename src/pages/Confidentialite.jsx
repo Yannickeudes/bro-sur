@@ -47,7 +47,7 @@ export default function Confidentialite() {
             <li>Supprimer tes discussions toi-même, ou demander la suppression complète de ton compte</li>
             <li>Retirer ton consentement à tout moment en supprimant ton compte</li>
           </ul>
-          <p className="mt-2 text-muted">Pour exercer ces droits ou poser une question, contacte-nous via la page « Besoin d’aide ? » ou à l’adresse e-mail associée à ton compte.</p>
+          <p className="mt-2 text-muted">Pour exercer ces droits ou poser une question, écris-nous à <a className="text-brand underline" href="mailto:contactbrosur@gmail.com">contactbrosur@gmail.com</a>.</p>
         </div>
 
         <div>

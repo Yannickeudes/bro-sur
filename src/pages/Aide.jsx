@@ -10,6 +10,10 @@ export default function Aide() {
         <li className="border-l-2 border-brand pl-4">Consulte un professionnel de santé ou un service d’écoute de ton pays.</li>
         <li className="border-l-2 border-brand pl-4">En cas de danger immédiat pour toi ou pour quelqu’un d’autre, contacte tout de suite les secours de ton pays.</li>
       </ul>
+      <div className="mt-10 rounded-2xl bg-sand p-6">
+        <h2 className="text-xl">Contacter l’équipe Bro sûr</h2>
+        <p className="mt-2 text-muted">Pour une question sur le site, un problème de compte ou un contenu à signaler à l’équipe : <a className="text-brand underline" href="mailto:contactbrosur@gmail.com">contactbrosur@gmail.com</a></p>
+      </div>
       {resources.length > 0 && (
         <div className="mt-10">
           <h2 className="text-2xl">Services d’écoute et d’aide</h2>
