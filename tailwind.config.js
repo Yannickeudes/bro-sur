@@ -5,7 +5,7 @@ export default {
       colors: {
         cream: '#faf6f1', card: '#fffdf9', line: '#e6dccd', sand: '#f1e6d6',
         ink: '#2a2622', muted: '#6b625a',
-        brand: { DEFAULT: '#1f6f6a', dark: '#17524e', soft: '#dcecea' },
+        brand: { DEFAULT: '#8a3b4d', dark: '#6a2c3c', soft: '#f3e5e9' },
       },
       fontFamily: {
         display: ['"Young Serif"', 'Georgia', 'serif'],
