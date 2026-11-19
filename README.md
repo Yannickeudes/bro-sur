@@ -12,7 +12,10 @@ Site en ligne : https://yannickeudes.github.io/bro-sur/
 - Réponses, fils de réponses sous un conseil et soutiens
 - Pseudonyme unique, ou publication anonyme au choix
 - Notifications lorsque quelqu’un répond
-- Signalement des contenus et page de modération réservée aux modérateurs
+- Signalement des contenus et page de modération réservée aux modérateurs : statistiques en temps réel et historique des signalements traités
+- Modification de ses propres discussions et réponses (texte uniquement)
+- Export de ses données personnelles et suppression de compte (RGPD) depuis « Mon espace »
+- Bannière « Installer l’application » pour la PWA (Android/desktop et iOS)
 - Limites anti-abus : 5 discussions et 30 réponses par heure et par membre
 - Règles de la communauté et page « Besoin d’aide ? »
 - Application installable (PWA) : icône d’accueil, écran de démarrage, cache hors-ligne de la coquille
@@ -58,7 +61,9 @@ Puis lancer `npm run dev` et ouvrir http://localhost:5173. Le fichier `.env` n�
 
 ## Base de données
 
-Dans Supabase, ouvrir SQL Editor et exécuter les scripts du dossier `supabase/` dans cet ordre : `schema.sql`, `etape-4.sql`, `etape-5.sql` (fils de réponses, notifications, vues corrigées — obligatoire pour que tout fonctionne).
+Dans Supabase, ouvrir SQL Editor et exécuter les scripts du dossier `supabase/` dans cet ordre : `schema.sql`, `etape-4.sql`, `etape-5.sql`, `etape-6.sql` (fils de réponses, notifications, édition des contenus, modération outillée, RGPD — obligatoire pour que tout fonctionne).
+
+La vue `public.membres_admin` (emails + pseudonymes, visible dans le Table Editor) est créée par `etape-6.sql` ; elle n’est jamais exposée à l’API publique.
 
 Pour nommer un modérateur, après avoir créé le compte (remplacer `VotrePseudo`) :
 
@@ -73,7 +78,8 @@ update public.profiles set role = 'moderator' where lower(pseudonym) = lower('Vo
 1. Dans le dépôt, Settings, Secrets and variables, Actions : créer `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
 2. Dans Settings, Pages : choisir « GitHub Actions » comme source.
 3. Pousser sur la branche `main` : le workflow construit et publie le site.
-4. Dans Supabase, Authentication, URL Configuration : renseigner l’adresse publiée.
+4. Dans Supabase, Authentication, URL Configuration : renseigner l’adresse publiée (`https://yannickeudes.github.io/bro-sur/`).
+5. Dans Supabase, Authentication, Sign In / Providers, Email : la confirmation d’e-mail peut être désactivée pour permettre l’inscription directe (compte immédiatement actif).
 
 **Vercel** : importer le dépôt, ajouter les deux variables d’environnement et déployer. Aucun autre réglage n’est nécessaire.
 

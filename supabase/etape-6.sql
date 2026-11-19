@@ -151,21 +151,20 @@ grant execute on function public.export_my_data() to authenticated;
 -- Laissé en commentaire pour plus tard.
 -- create trigger ... execute function public.notify_by_email() ...
 
+-- 7. Vue admin : emails + pseudonymes (jamais exposée à l'API publique) ---------
+create or replace view public.membres_admin as
+select
+  u.id,
+  u.email,
+  u.created_at as insrit_le,
+  (u.email_confirmed_at is not null) as email_confirme,
+  p.pseudonym,
+  p.role
+from auth.users u
+left join public.profiles p on p.id = u.id
+order by u.created_at desc;
+
+revoke all on public.membres_admin from anon, authenticated;
+
 -- Fin de l'étape 6.
 select 'Étape 6 appliquée' as status;
-```
-
-Hmm wait — I left a stray ```sql fence inside file? No — that was my draft thinking. The file content written is clean (no trailing fence). Good, but let me double check file end — I wrote "Fin de l'étape 6.\nselect 'Étape 6 appliquée' as status;" — fine.
-
-Wait, issues in the SQL:
-- `moderation_stats` view created then revoked then dropped at end — but `moderation_dashboard()` references `public.moderation_stats` in `return query select * from public.moderation_stats` — if I drop the view, the function breaks! Order problem: function defined before drop view. Since view dropped, function will fail at runtime. Fix: remove the view entirely, put the select directly in the function. Let me rewrite that section: drop view if exists moderation_stats; function does the counts inline.
-- Also `create or replace view` for replies_public/discussions_public adding is_mine at END — allowed (new columns must be appended at end — yes they are).
-- `(parent_reply_id is not null)::int` in etape-5 fine.
-- In export_my_data: `to_jsonb(p) - 'id'` removes id? Actually removing id loses profile id — fine. But discussions to_jsonb includes author_id removed — includes everything else incl. is_anonymous, status. replies similar. reports_made ok. Reasonable.
-- delete_own_account: deleting auth.users cascades profiles (FK on delete cascade) → discussions/replies cascade via profiles. Notifications too. reports reporter cascade. Good. But auth.users delete requires... security definer as postgres can delete auth.users — yes.
-- grant/revoke syntax for functions: `revoke all on function public.f(args) from public, anon;` — 'public' keyword refers to PUBLIC role; syntax `from public` is ambiguous with schema? In REVOKE ... FROM public means PUBLIC pseudo-role — allowed: `REVOKE ALL ON FUNCTION ... FROM PUBLIC` — writing `public` lowercase is fine. But `from public, anon` — mixing PUBLIC and anon OK.
-- `grant execute on function ... to authenticated` fine.
-- moderation_dashboard returns table with bigint columns — count(*) returns bigint ✓.
-- `create or replace view` cannot change column names/order of existing — we append is_mine at end: discussions_public existing columns: id, category, title, body, created_at, is_anonymous, author_pseudonym, reply_count, thread_reply_count, support_count → append is_mine ✓. replies_public: id, discussion_id, parent_reply_id, body, created_at, is_anonymous, author_pseudonym, is_discussion_author → append is_mine ✓.
-
-Need to fix the moderation_stats ordering bug. Rewrite section 5.<|close|>think<|sep|><|open|>response<|sep|>Je corrige un bug dans le script : la vue `moderation_stats` est supprimée à la fin alors que la fonction en dépend. J'intègre les compteurs directement dans la fonction.<|close|>response<|sep|><|open|>tools<|sep|><|open|>call tool="edit" index="1"<|sep|><|open|>argument key="file_path" type="string"<|sep|>C:\Users\HP\Downloads\bro-sur-etape-2\bro-sur\supabase\etape-6.sql
